@@ -1,3 +1,5 @@
+import argparse
+
 from dataclasses import dataclass, fields
 from include.constants import BattFiles, CHARGE_BEHAVIOUR_DESCRIPTION
 
@@ -32,6 +34,39 @@ class BatteryData:
     def health_percentage(self) -> float:
         return round(100 * self.energy_full / self.energy_full_design, 2)
 
+class CapacityInterval:
+    # TODO: this constructor is doing too much at once. split it into smaller parts.
+    def __init__(self, interval: str):
+        self.start: int
+        self.end: int
+
+        if interval.count('-') != 1:
+            # TODO: write error message
+            raise argparse.ArgumentTypeError("placeholder1")
+
+        try:
+            self.start, self.end = [(int(x) if x else None) for x in interval.split('-')]
+        except ValueError:
+            # TODO: write error message
+            raise argparse.ArgumentTypeError("placeholder2")
+
+        if None in [self.start, self.end]:
+            batt_data = get_batt_data()
+            if self.start is None:
+                self.start = batt_data.start_threshold
+            if self.end is None:
+                self.end = batt_data.end_threshold
+
+        for val in [self.start, self.end]:
+            # TODO: double check the valid range for start and end
+            if val not in range(0, 101):
+                # TODO: write error message
+                raise argparse.ArgumentTypeError(f"placeholder3 (val={val})")
+
+        if self.start >= self.end:
+            # TODO: write error message
+            raise argparse.ArgumentTypeError("placeholder4")
+        
 def get_batt_data() -> BatteryData:
     data_dict = {
         field.name: field.type(getattr(BattFiles, field.name.upper()).read_text().strip())
@@ -46,8 +81,7 @@ def get_batt_data() -> BatteryData:
 
     return BatteryData(**data_dict)
 
-# TODO: print all info about status
-def print_status(batt_data: BatteryData):
+def print_status(batt_data: BatteryData) -> None:
     print(
         # Line 1
         f"Current capacity: {batt_data.capacity}%, {batt_data.status} "
@@ -65,3 +99,12 @@ def print_status(batt_data: BatteryData):
         # Line 4
         f"Health: {batt_data.health_percentage}% ({batt_data.cycle_count} cycles)"
     )
+
+# TODO: check write operations ordering
+def set_interval(interval: CapacityInterval) -> None:
+    try:
+        BattFiles.START_THRESHOLD.write_text(str(interval.start))
+        BattFiles.END_THRESHOLD.write_text(str(interval.end))
+    # TODO: handle exceptions
+    finally:
+        pass
