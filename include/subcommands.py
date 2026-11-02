@@ -1,7 +1,7 @@
 from argparse import Namespace
 
 from include.batt_lib import (
-    get_batt_data, print_status, set_interval,
+    get_batt_data, print_status, set_charge_interval,
     CapacityInterval
 )
 
@@ -10,5 +10,5 @@ def status(args: Namespace) -> None:
 
 def set(args: Namespace) -> None:
     interval: CapacityInterval = args.interval
-    set_interval(interval)
+    set_charge_interval(interval)
     # TODO: give feedback to user
